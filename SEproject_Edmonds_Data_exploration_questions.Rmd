@@ -36,6 +36,7 @@ configuration <- fread("configuration.csv",stringsAsFactors=FALSE)
     Q1. Dplyr.
         
         Based on the visitor data how long did the visits last and did the longer visit times lead to purchases or vis versa?
+        Where the new vehicles really new based on the amount of milage ?
         
 ```{r}
 
@@ -85,9 +86,6 @@ used_bought_cat <- visitor_purchased_used %>% mutate(time_hours_cat = ifelse(tot
  used_bought_cat$time_hours_cat<- factor(used_bought_cat$time_hours_cat, levels = c(1,2,3,4,5,6,7), labels = c(">1hr", " 1-5hrs", " 5-10hrs","10-20hrs","20-48hrs", "48-72hrs", ">72hrs")) 
 
 
-
-select(new_bought_cat, time_hours_cat, tot_dwell_time_hours)
-
 table(new_bought_cat$time_hours_cat )
 table(used_bought_cat$time_hours_cat )
 
@@ -106,7 +104,19 @@ histogram(used_bought_cat$time_hours_cat)
        Compare the graphs for the visits less than an hour that purchased cars to the 1-5hr visits?
        Are there differences?
       
-        
+```{r}
+install.packages("zipcode")
+library(zipcode)
+
+zipcode_tran <- new_bought_cat %>% select(zip) %>% distinct()
+data(zipcode)
+
+new_bought_latlon = merge(new_bought_cat,zipcode, by.x='zip', by.y='zip') %>% select(visitor_key, date_sold,model_bought,make_bought,model_year_bought,time_hours_cat,city,state,latitude,longitude)
+
+names(new_bought_latlon)
+
+
+```        
     Q3. JSON/XML
     
         Create a data frame based on top models bought in each year and pull               important consummer data?
