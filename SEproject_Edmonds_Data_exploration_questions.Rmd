@@ -35,7 +35,7 @@ configuration <- fread("configuration.csv",stringsAsFactors=FALSE)
 + 2. Questions 
     Q1. Dplyr.
         
-        Based on the visitor data how long did the visits last and did the longer visit times         lead to purchases or vis versa?
+        Based on the visitor data how long did the visits last and did the longer visit times lead to purchases or vis versa?
         
 ```{r}
 
@@ -109,7 +109,7 @@ histogram(used_bought_cat$time_hours_cat)
         
     Q3. JSON/XML
     
-        Create a data frame based on top models bought in each year and pull important consummer data?
+        Create a data frame based on top models bought in each year and pull               important consummer data?
       
     Q4. SQL (sqldf or Rsqlite)
         Create a RSQL database and figure out how many purchases where classified as Trucks, SUVs and cars , and the popular years for makers? 
