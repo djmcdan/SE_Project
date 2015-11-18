@@ -99,12 +99,13 @@ histogram(used_bought_cat$time_hours_cat)
 #Of the new and used purchases that visited the site for less than an hour how many different models did they look at?
 ```
 
-
       
     Q2. Visualizations (ggplot2, googlevis, cardodb, google fusion tables)
         
-        What where the most purchased models and where they the same for all the years data is on?
-        Where were most purchases of the top 3 models purchased within the first 5 hours of site visiting? (Map of US geocoded based on         zip codes)
+       Using zipcodes provided from transactions map the US top five models bought? Look at this per year bought?
+       Compare the graphs for the visits less than an hour that purchased cars to the 1-5hr visits?
+       Are there differences?
+      
         
     Q3. JSON/XML
     
@@ -113,7 +114,10 @@ histogram(used_bought_cat$time_hours_cat)
     Q4. SQL (sqldf or Rsqlite)
         Create a RSQL database and figure out how many purchases where classified as Trucks, SUVs and cars , and the popular years for makers? 
 
-    Q5. Create a print,plot and summary object for this data.
+    Q5. ObjectS
+    Create a print for the top vehicles,
+        plot the top purchased and give a summary of  top visited and top purchased. 
+        All this from an object for this data.
     
 
 
