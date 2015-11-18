@@ -13,28 +13,27 @@ output: html_document
 + 2. Questions 
     Q1. Dplyr.
         
-        Based on the visitor data how long did the visits last and did the longer visit times         lead to purchases or vis versa?
+       Based on the visitor data how long did the visits last and did the longer visit times lead to purchases or vis versa?
         
         
-        How much on average did visitors save from purchase vs msrp for cars bought in the           year of the new vehicles?
+         Q2. Visualizations (ggplot2, googlevis, cardodb, google fusion tables)
         
-        Of the most population cars that were visited how many lead to purchases?
-        
+       Using zipcodes provided from transactions map the US top five models bought? Look at this per year bought?
+       Compare the graphs for the visits less than an hour that purchased cars to the 1-5hr visits?
+       Are there differences?
       
-    Q2. Visualizations (ggplot2, googlevis, cardodb, google fusion tables)
-        
-        What where the most purchased models and where they the same for all the years data          is on?
-        Where were most purchases of the top 3 models purchased? (Map of US geocoded based on         zip codes)
         
     Q3. JSON/XML
     
-        Create a data frame based on top models bought in each year and pull some data on            those models?
+        Create a data frame based on top models bought in each year and pull               important consummer data?
       
     Q4. SQL (sqldf or Rsqlite)
-        Create a RSQL database and figure out how many purchases where classified as Trucks,         SUVs and cars? 
+        Create a RSQL database and figure out how many purchases where classified as Trucks, SUVs and cars , and the popular years for makers? 
 
-    Q5. Try and create an object that gives some of the questions above answers.
-    
+    Q5. ObjectS
+    Create a print for the top vehicles,
+        plot the top purchased and give a summary of  top visited and top purchased. 
+        All this from an object for this data.
 
 
 ##Plan to work on one piece a day starting Monday November 16th.
@@ -42,47 +41,4 @@ output: html_document
 
 ##Note to self place data for questions outside of SQL in fread
 ##     fread("data.csv", stringsAsFactor=FALSE)
-
-
-
-```{r}
-data(mtcars)
-plot(mpg~wt, data=mtcars)
-
-#  As the weight of the automobile goes up the MPG goes down. It looks to be linear
-#  which means pehaps we can then do some regression. 
-
-mylm <- lm(mpg~wt, data=mtcars)
-abline(mylm)
-```
-
----
-
-## Decisions, Decisions, Decisions
-
------
-
-## History - Don't Forget The Past
-
-
-
-```{r eval=FALSE}
-
-system.time(config.table %>% group_by(style_name) %>% summarize(count=n()) %>% arrange(desc(count)))
-   user  system elapsed
-  0.477   0.054   0.532
-
-```
-
-So the answer is yes although it seemed to take longer when we mixed the two approaches. But if the file you are reading in is huge then it might be worth it to read stuff in using **fread** and then using dplyr (if that is your favorite). 
-
-
-```{r eval=FALSE}
-
-# Note that this could be solved using an SQL approach but it takes much longer
-library(sqldf)
-sqldf("select style_name, count(*)  as cnt from config_df group by style_name order by cnt desc limit 10")
-
-
-```
 
