@@ -1,0 +1,148 @@
+---
+title: SE project Edmonds Data exploration and question
+author: "Darius McDaniel"
+date: "November 11, 2015"
+output: html_document
+---
+
+----------
+
+```{r eval=FALSE}
+#These packages must be called to do below programs
+library(data.table)
+library(bit64)
+library(plyr)
+library(dplyr)
+library(DescTools)
+library(lubridate)# Makes parting dates easier
+library(ggplot2)
+library(lattice)
+
+
+setwd("C:/Users/Darius/Documents/DF2015_Data/DF2015_revised") 
+
+visitor <- fread("visitor.csv",stringsAsFactors=FALSE)
+transactions <- fread("transactions.csv",stringsAsFactors=FALSE)
+shopping <- fread("shopping.csv",stringsAsFactors=FALSE)
+leads <- fread("leads.csv",stringsAsFactors=FALSE)
+configuration <- fread("configuration.csv",stringsAsFactors=FALSE)
+
+```
+
+## This document will aim to answer different questions from the edmonds data. There will be a question answered for most of the main topics covered in this semesters class.
+
++ 1. All programs will be added and commited to git.
++ 2. Questions 
+    Q1. Dplyr.
+        
+        Based on the visitor data how long did the visits last and did the longer visit times         lead to purchases or vis versa?
+        
+```{r}
+
+
+visitor_time <- visitor %>% 
+  mutate(new_dwell_time_mins = new_dwell_time/60, used_dwell_time_mins = used_dwell_time/60 , tot_dwell_time_mins =   tot_dwell_time/60 , tot_dwell_time_hours = tot_dwell_time_mins/60)%>% 
+  select(visitor_key, new_dwell_time_mins,used_dwell_time_mins,tot_dwell_time_mins,tot_dwell_time_hours, zip)
+
+mean_visitor_time <- visitor_time %>% summarise(avgvisit_time = mean(tot_dwell_time_mins, na.rm = TRUE)) 
+
+med_visitor_time <- visitor_time %>% summarise(med_visit_time = median(tot_dwell_time_mins, na.rm = TRUE))
+
+
+                                               names(visitor_time)
+```
+                                            
+#Now for those that purchased new or used car what was the avg time visited?
+```{r}
+new_bought <- transactions  %>% filter(new_or_used_bought == "N") %>% select(visitor_key, date_sold, new_or_used_bought, price_bought,model_bought,make_bought,model_year_bought,mileage_bought)%>% distinct()
+used_bought <- transactions %>% filter(new_or_used_bought == "U") %>% select(visitor_key, date_sold, new_or_used_bought, price_bought,model_bought,make_bought,model_year_bought,mileage_bought)%>% distinct()
+
+                                               
+                                                                                              
+visitor_purchased_new <- visitor_time %>%inner_join(new_bought)%>% distinct()
+visitor_purchased_used <- visitor_time %>%inner_join(used_bought)%>% distinct()
+
+
+#How many purchases were  >1hr, 1-5, 5-10,10-20, gt20 hrs
+
+new_bought_cat <- visitor_purchased_new %>% mutate(time_hours_cat = ifelse(tot_dwell_time_hours < 1, 1, ifelse(tot_dwell_time_hours >= 1 & tot_dwell_time_hours < 5,2,
+                                                                              ifelse(tot_dwell_time_hours >= 5 & tot_dwell_time_hours < 10,3,   
+                                                                              ifelse(tot_dwell_time_hours >= 10 & tot_dwell_time_hours < 20,4,
+                                                                              ifelse(tot_dwell_time_hours >= 20 & tot_dwell_time_hours < 48,5,
+                                                                              ifelse(tot_dwell_time_hours >= 48 & tot_dwell_time_hours < 72,6,
+                                                                              ifelse(tot_dwell_time_hours >72,7,NA)))))))) 
+ new_bought_cat$time_hours_cat<- factor(new_bought_cat$time_hours_cat, levels = c(1,2,3,4,5,6,7), labels = c(">1hr", " 1-5hrs", " 5-10hrs","10-20hrs","20-48hrs", "48-72hrs", ">72hrs")) 
+
+
+used_bought_cat <- visitor_purchased_used %>% mutate(time_hours_cat = ifelse(tot_dwell_time_hours < 1, 1, ifelse(tot_dwell_time_hours >= 1 & tot_dwell_time_hours < 5,2,
+                                                                              ifelse(tot_dwell_time_hours >= 5 & tot_dwell_time_hours < 10,3,   
+                                                                              ifelse(tot_dwell_time_hours >= 10 & tot_dwell_time_hours < 20,4,
+                                                                              ifelse(tot_dwell_time_hours >= 20 & tot_dwell_time_hours < 48,5,
+                                                                              ifelse(tot_dwell_time_hours >= 48 & tot_dwell_time_hours < 72,6,
+                                                                              ifelse(tot_dwell_time_hours >72,7,NA)))))))) 
+
+
+ used_bought_cat$time_hours_cat<- factor(used_bought_cat$time_hours_cat, levels = c(1,2,3,4,5,6,7), labels = c(">1hr", " 1-5hrs", " 5-10hrs","10-20hrs","20-48hrs", "48-72hrs", ">72hrs")) 
+
+
+
+select(new_bought_cat, time_hours_cat, tot_dwell_time_hours)
+
+table(new_bought_cat$time_hours_cat )
+table(used_bought_cat$time_hours_cat )
+
+histogram(new_bought_cat$time_hours_cat)
+histogram(used_bought_cat$time_hours_cat)
+
+#Observation Over 50percent of purchases that happened within an hour of visiting the site for new and used cars
+                                         
+#Of the new and used purchases that visited the site for less than an hour how many different models did they look at?
+```
+
+
+      
+    Q2. Visualizations (ggplot2, googlevis, cardodb, google fusion tables)
+        
+        What where the most purchased models and where they the same for all the years data is on?
+        Where were most purchases of the top 3 models purchased within the first 5 hours of site visiting? (Map of US geocoded based on         zip codes)
+        
+    Q3. JSON/XML
+    
+        Create a data frame based on top models bought in each year and pull important consummer data?
+      
+    Q4. SQL (sqldf or Rsqlite)
+        Create a RSQL database and figure out how many purchases where classified as Trucks, SUVs and cars , and the popular years for makers? 
+
+    Q5. Create a print,plot and summary object for this data.
+    
+
+
+##Plan to work on one piece a day starting Monday November 16th.
+
+
+##Note to self place data for questions outside of SQL in fread
+##     fread("data.csv", stringsAsFactor=FALSE)
+
+
+
+```{r}
+
+```
+
+---
+
+
+
+
+```{r eval=FALSE}
+
+
+```
+
+
+
+```{r eval=FALSE}
+
+
+```
+
