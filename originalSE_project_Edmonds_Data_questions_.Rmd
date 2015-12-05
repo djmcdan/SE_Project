@@ -1,0 +1,46 @@
+---
+
+title: SE project Edmonds Data exploration and question
+author: "Darius McDaniel"
+date: "November 20, 2015"
+output: html_document
+---
+
+----------
+
+## This document will aim to answer different questions from the edmonds data. There will be a question answered for most of the main topics covered in this semesters class.
+
+ 1.  All programs will be added and committed to github and found here : https://github.com/djmcdan/SE_Project.git
+
+
+ 2. Questions
+
+    a. Dplyr
+        
+       Based on the visitor data how long did the visits last and did the longer visit times lead to purchases or vis versa?
+        
+        
+
+    b. Visualizations ( googlevis, ggplot2,  fusion tables)
+        
+       Using zip codes provided from transactions map the US top five models bought? Look at this per year bought?
+       Compare the graphs for the visits less than an hour that purchased cars to the 1-5hr visits?
+       Are there differences?
+ 
+  c. SQL (sqldf / Rsqlite)
+    
+
+        Create a SQLite database and figure out how many purchases where classified as Trucks, SUVs and cars , and the popular years for makers using different queries?
+
+   d. Objects
+    
+
+    Create prints for the top vehicles purchased for the US with the average site visited time, create a print broken down by state.
+
+    Summarize the total purchase amounts for the top models in each state.
+    Plot the top makes purchased by zipcode. This will be plotted two ways using googlevis and  ggplot. 
+    
+    
+    JSON/XML
+    
+     e.   Create a data frame based on top models bought in each year and pull important consummer rating data?
