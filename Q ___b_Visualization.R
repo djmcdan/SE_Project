@@ -52,20 +52,11 @@ use_bought_latlon_.plot <- gvisMap(use_bought_latlon_, "LatLon" ,
 plot(use_bought_latlon_.plot)
 
 
-#Now will use ggmap and ggplot  see if this is better
+#Now will using ggplot  see if this is better
 
 statecount_nbll <- new_bought_latlon_ %>% group_by(state,year_purchased) %>% summarise(n = n ()) %>% mutate(ct = n/100)
 statecount_ubll <- use_bought_latlon_ %>% group_by(state,year_purchased) %>% summarise(n = n ()) %>% mutate(ct = n/100)
 
-
-
-
-p_n = qmplot(longitude, latitude, data = new_bought_latlon_, colour = I("blue"),size = I(3), darken = .3) + facet_wrap(~ year_purchased) +  expand_limits() + theme_minimal()
-p_u = qmplot(longitude, latitude, data = new_bought_latlon_, colour = I("blue"),size = I(3), darken = .3) + facet_wrap(~ year_purchased) +  expand_limits() + theme_minimal()
-
-
-plot(p_n)
-plot(p_u)
 
 statecount_nbll$region_ <- state.name[match(statecount_nbll$state,state.abb)]
 statecount_nbll$region <- tolower(statecount_nbll$region_)
