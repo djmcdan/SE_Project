@@ -1,9 +1,9 @@
 ---
 
-title: SE project Edmonds Data exploration and question
+title: "SE project Edmonds Data exploration and question"
 author: "Darius McDaniel"
 date: "November 20, 2015"
-output: html_document
+output: word_document
 ---
 
 ----------
@@ -14,7 +14,8 @@ All programs will be added and committed to github and found here : https://gith
 
 Below are all the packages used in this project and also the data used.
 
-```{r}
+
+```{r, echo=FALSE, message=F, warning=F}
 
 #SE_projectPackages
 
@@ -28,11 +29,14 @@ suppressPackageStartupMessages(library(RSQLite))
 suppressPackageStartupMessages(library(DescTools))
 suppressPackageStartupMessages(library(lubridate))
 suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(googleVis))
 suppressPackageStartupMessages(library(lattice))
 suppressPackageStartupMessages(library(ggmap))
+suppressPackageStartupMessages(library(zipcode))
 
+```
 
-
+```{r, echo=FALSE, message=F, warning=F}
 setwd("C:/Users/Darius/Documents/DF2015_Data/DF2015_revised") 
 
 #SE_projectData
@@ -57,7 +61,7 @@ Questions
 
 To first answer this question we must do some data cleaning. 
 
-```{r}
+```{r, echo=FALSE, message=F, warning=F}
 
 
 
@@ -75,8 +79,9 @@ mean_med_visitor_time <-sum_visitor_time %>% summarise(mean_hours_visited = mean
 #Question b.
 
 
-new_bought <- transactions  %>% filter(new_or_used_bought == "N") %>% select(visitor_key, date_sold, new_or_used_bought, price_bought,model_bought,make_bought,model_year_bought,mileage_bought,bodytype_bought)%>% distinct()
-used_bought <- transactions %>% filter(new_or_used_bought == "U") %>% select(visitor_key, date_sold, new_or_used_bought, price_bought,model_bought,make_bought,model_year_bought,mileage_bought,bodytype_bought)%>% distinct()
+
+new_bought <- transactions  %>% filter(new_or_used_bought == "N") %>% select(visitor_key, date_sold, new_or_used_bought, price_bought,model_bought,make_bought,model_year_bought,mileage_bought,bodytype_bought,zip_bought)%>% distinct()
+used_bought <- transactions %>% filter(new_or_used_bought == "U") %>% select(visitor_key, date_sold, new_or_used_bought, price_bought,model_bought,make_bought,model_year_bought,mileage_bought,bodytype_bought,zip_bought)%>% distinct()
 
 
 
@@ -166,8 +171,108 @@ histogram(used_bought_cat$time_hours_cat)
        Using zip codes provided from transactions map the US top five models bought? Look at this per year bought?
        Compare the graphs for the visits less than an hour that purchased cars to the 1-5hr visits?
        Are there differences?
-```{r} 
+```{r, echo=FALSE, message=F, warning=F}
  
+zipcode_tran <- transactions %>% mutate(zip = zip_bought) %>% select(zip) %>% distinct()
+data(zipcode)
+
+milage_bought_new <- milage_bought_new %>% mutate(zip = as.factor(zip_bought))
+milage_bought_used <- milage_bought_used %>% mutate(zip = as.factor(zip_bought))
+
+  
+new_bought_latlon = merge(milage_bought_new,zipcode, by.x='zip', by.y='zip') 
+use_bought_latlon = merge(milage_bought_used,zipcode, by.x='zip', by.y='zip') 
+
+
+
+#Googlevis
+
+#Paste the lat and long together for googlevis
+new_bought_latlon$LatLon <- paste(round(new_bought_latlon$latitude,2),round(new_bought_latlon$longitude,2),sep=":")
+use_bought_latlon$LatLon <- paste(round(use_bought_latlon$latitude,2),round(use_bought_latlon$longitude,2),sep=":")
+
+#Remove any NAs in both
+new_bought_latlon_ <- new_bought_latlon[new_bought_latlon$LatLon != "NA:NA",] 
+use_bought_latlon_ <- use_bought_latlon[use_bought_latlon$LatLon != "NA:NA",]
+
+#Plot
+new_bought_latlon_.plot <- gvisMap(new_bought_latlon_, "LatLon" ,
+                                   options=list( showLine=TRUE, enableScrollWheel=TRUE,
+                                                 mapType='hybrid', useMapTypeControl=TRUE,
+                                                 width=1500,height=800))
+
+
+
+use_bought_latlon_.plot <- gvisMap(use_bought_latlon_, "LatLon" ,
+              options=list( showLine=TRUE, enableScrollWheel=TRUE,
+                           mapType='hybrid', useMapTypeControl=TRUE,
+                           width=1500,height=800))
+
+
+plot(new_bought_latlon_.plot)
+plot(use_bought_latlon_.plot)
+
+
+#Now will use ggmap and ggplot  see if this is better
+
+statecount_nbll <- new_bought_latlon_ %>% group_by(state,year_purchased) %>% summarise(n = n ()) %>% mutate(ct = n/100)
+statecount_ubll <- use_bought_latlon_ %>% group_by(state,year_purchased) %>% summarise(n = n ()) %>% mutate(ct = n/100)
+
+
+
+
+p_n = qmplot(longitude, latitude, data = new_bought_latlon_, colour = I("blue"),size = I(3), darken = .3) + facet_wrap(~ year_purchased) +  expand_limits() + theme_minimal() + labs(title = "Map of New purchased cars in US from 2013 - 2015")  
+p_u = qmplot(longitude, latitude, data = new_bought_latlon_, colour = I("blue"),size = I(3), darken = .3) + facet_wrap(~ year_purchased) +  expand_limits() + theme_minimal() + labs(title = "Map of Used purchased cars in US from 2013 - 2015")  
+
+
+plot(p_n)
+plot(p_u)
+
+statecount_nbll$region_ <- state.name[match(statecount_nbll$state,state.abb)]
+statecount_nbll$region <- tolower(statecount_nbll$region_)
+
+statecount_ubll$region_ <- state.name[match(statecount_ubll$state,state.abb)]
+statecount_ubll$region <- tolower(statecount_ubll$region_)
+
+#Map of new cars purchased in the US from 2013-2015
+
+us <- map_data("state")
+
+gg_nw <- ggplot() + geom_map(data=us, map=us,
+                    aes(x=long, y=lat, map_id=region),
+                    fill="#ffffff", color="#ffffff", size=0.15)
+gg_nw <- gg_nw + geom_map(data=statecount_nbll, map=us,
+                    aes(fill=n, map_id=region),
+                    color="#ffffff", size=0.15) + facet_wrap(~ year_purchased) 
+#Want to see them the maps horizontally and in new color
+
+gg_nw <- gg_nw + scale_fill_continuous(low='thistle2', high='darkred', 
+                                 guide='colorbar')+ facet_wrap(~ year_purchased, ncol = 1)  + labs(title = "Map of New purchased cars in US")  
+gg_nw
+
+#Want to make it look alittle better 
+gg_nw <- gg_nw + labs(x=NULL, y=NULL) + coord_map("albers", lat0 = 39, lat1 = 45) + theme(panel.border = element_blank())  + theme(panel.background = element_blank()) + theme(axis.ticks = element_blank()) + theme(axis.text = element_blank())
+gg_nw
+
+##Map of used cars purchased in the US from 2013-2015
+gg_us <- ggplot() + geom_map(data=us, map=us,
+                          aes(x=long, y=lat, map_id=region),
+                          fill="#ffffff", color="#ffffff", size=0.15)
+gg_us <- gg_us + geom_map(data=statecount_ubll, map=us,
+                          aes(fill=n, map_id=region),
+                          color="#ffffff", size=0.15) + facet_wrap(~ year_purchased) 
+
+#Want to see them the maps horizontally and in new color
+
+gg_us <- gg_us + scale_fill_continuous(low='thistle2', high='darkred', 
+                                       guide='colorbar')+ facet_wrap(~ year_purchased, ncol = 1) + labs(title = "Map of Used purchased cars in US")  
+
+gg_us
+
+#Want to make it look alittle better 
+
+gg_us <- gg_us + labs(x=NULL, y=NULL) + coord_map("albers", lat0 = 39, lat1 = 45) + theme(panel.border = element_blank())  + theme(panel.background = element_blank()) + theme(axis.ticks = element_blank()) + theme(axis.text = element_blank())
+gg_us
  
  
  
@@ -180,7 +285,7 @@ histogram(used_bought_cat$time_hours_cat)
         What are the average, min and max mileages bought along with the average, min and max price bought?
 
 
-``` {r}       
+```{r, echo=FALSE, message=F, warning=F}    
 #Create the SQLite data base
   
 db <- dbConnect(SQLite(), dbname="Edmonds.sqlite")
@@ -189,15 +294,15 @@ setwd("C:/Users/Darius/Documents/DF2015_Data/DF2015_revised")
 
 #Below write the different dataset into sql tables
 
-dbWriteTable(conn = db, name = "Visitor", value = "visitor.csv",
+dbWriteTable(conn = db, name = "Visitor_", value = "visitor.csv",
              row.names = FALSE, header = TRUE)
-dbWriteTable(conn = db, name = "Transactions", value = "transactions.csv",
+dbWriteTable(conn = db, name = "Transactions_", value = "transactions.csv",
              row.names = FALSE, header = TRUE)
-dbWriteTable(conn = db, name = "Configuration", value = "configuration.csv",
+dbWriteTable(conn = db, name = "Configuration_", value = "configuration.csv",
              row.names = FALSE, header = TRUE)
-dbWriteTable(conn = db, name = "Leads", value = "leads.csv",
+dbWriteTable(conn = db, name = "Leads_", value = "leads.csv",
              row.names = FALSE, header = TRUE)
-dbWriteTable(conn = db, name = "Shopping", value = "shopping.csv",
+dbWriteTable(conn = db, name = "Shopping_", value = "shopping.csv",
              row.names = FALSE, header = TRUE)
 
 
@@ -205,8 +310,8 @@ dbWriteTable(conn = db, name = "Shopping", value = "shopping.csv",
 dbListTables(db)     
 
 # The columns in Visitor and Transactions
-dbListFields(db, "Visitor")         
-dbListFields(db, "Transactions")  
+dbListFields(db, "Visitor_")         
+dbListFields(db, "Transactions_")  
 ```
 
 Queries for Questions in the database
@@ -215,22 +320,22 @@ Queries for Questions in the database
       
 #Lets see how many new cars where bought by manufactuer year
 
-dbGetQuery(db,"SELECT model_year_bought as Model_year_purchased_New, count(*) as modelYR_freq from Transactions  WHERE new_or_used_bought = 'N' GROUP BY model_year_bought")
+dbGetQuery(db,"SELECT model_year_bought as Model_year_purchased_New, count(*) as modelYR_freq from Transactions_  WHERE new_or_used_bought = 'N' GROUP BY model_year_bought")
 
-dbGetQuery(db,"SELECT model_year_bought as Model_year_purchased_Used, count(*) as modelYR_freq from Transactions  WHERE new_or_used_bought = 'U' GROUP BY model_year_bought")
+dbGetQuery(db,"SELECT model_year_bought as Model_year_purchased_Used, count(*) as modelYR_freq from Transactions_  WHERE new_or_used_bought = 'U' GROUP BY model_year_bought")
 
 
 #How many different body types were purchased new and used displaying only the top 10
 
-dbGetQuery(db,"select bodytype_bought, count(*) as freq from Transactions WHERE new_or_used_bought = 'N' group by bodytype_bought order by freq desc LIMIT 10")
-dbGetQuery(db,"select bodytype_bought, count(*) as freq from Transactions WHERE new_or_used_bought = 'U' group by bodytype_bought order by freq desc LIMIT 10")
+dbGetQuery(db,"select bodytype_bought, count(*) as freq from Transactions_ WHERE new_or_used_bought = 'N' group by bodytype_bought order by freq desc LIMIT 10")
+dbGetQuery(db,"select bodytype_bought, count(*) as freq from Transactions_ WHERE new_or_used_bought = 'U' group by bodytype_bought order by freq desc LIMIT 10")
 
 
 #What are the top five makers that sold the most new and used cars 
 
-dbGetQuery(db,"select make_bought, count(*) as freq from Transactions WHERE new_or_used_bought = 'N'  GROUP BY make_bought  order by freq desc LIMIT 5")
+dbGetQuery(db,"select make_bought, count(*) as freq from Transactions_ WHERE new_or_used_bought = 'N'  GROUP BY make_bought  order by freq desc LIMIT 5")
 
-dbGetQuery(db,"select make_bought, count(*) as freq from Transactions WHERE new_or_used_bought = 'U' GROUP BY make_bought order by freq desc LIMIT 5")
+dbGetQuery(db,"select make_bought, count(*) as freq from Transactions_ WHERE new_or_used_bought = 'U' GROUP BY make_bought order by freq desc LIMIT 5")
 
 #Honda and Toyota both have the most purchases for new and used
 
@@ -239,10 +344,10 @@ dbGetQuery(db,"select make_bought, count(*) as freq from Transactions WHERE new_
 
 #New
 dbGetQuery(db,"select make_bought, count(*) as freq, min(price_bought), avg(price_bought), max(price_bought),min(mileage_bought),  avg(mileage_bought), max(mileage_bought)  
-      from Transactions WHERE new_or_used_bought = 'N'  GROUP BY make_bought order by freq desc LIMIT 10")
+      from Transactions_ WHERE new_or_used_bought = 'N'  GROUP BY make_bought order by freq desc LIMIT 10")
 #Used
 dbGetQuery(db,"select make_bought, count(*) as freq, min(price_bought), avg(price_bought), max(price_bought),min(mileage_bought),  avg(mileage_bought), max(mileage_bought)  
-      from Transactions WHERE new_or_used_bought = 'U'  GROUP BY make_bought order by freq desc LIMIT 10")
+      from Transactions_ WHERE new_or_used_bought = 'U'  GROUP BY make_bought order by freq desc LIMIT 10")
 
 
 
