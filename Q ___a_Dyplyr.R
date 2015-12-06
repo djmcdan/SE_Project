@@ -24,13 +24,13 @@ mean_med_visitor_time
 
 #Now for those that purchased new or used car what was the avg time visited?
 
-new_bought <- transactions  %>% filter(new_or_used_bought == "N") %>% select(visitor_key, date_sold, new_or_used_bought, price_bought,model_bought,make_bought,model_year_bought,mileage_bought,bodytype_bought)%>% distinct()
-used_bought <- transactions %>% filter(new_or_used_bought == "U") %>% select(visitor_key, date_sold, new_or_used_bought, price_bought,model_bought,make_bought,model_year_bought,mileage_bought,bodytype_bought)%>% distinct()
+new_bought <- transactions  %>% filter(new_or_used_bought == "N") %>% select(visitor_key, date_sold, new_or_used_bought, price_bought,model_bought,make_bought,model_year_bought,mileage_bought,bodytype_bought,zip_bought)%>% distinct()
+used_bought <- transactions %>% filter(new_or_used_bought == "U") %>% select(visitor_key, date_sold, new_or_used_bought, price_bought,model_bought,make_bought,model_year_bought,mileage_bought,bodytype_bought,zip_bought)%>% distinct()
 
 
 
-visitor_purchased_new <- sum_visitor_time %>%inner_join(new_bought)%>% distinct()
-visitor_purchased_used <- sum_visitor_time %>%inner_join(used_bought)%>% distinct()
+visitor_purchased_new <- new_bought %>%inner_join(sum_visitor_time)%>% distinct()
+visitor_purchased_used <- used_bought %>%inner_join(sum_visitor_time)%>% distinct()
 
 avgs_visitor_time_purchaseNw <-visitor_purchased_new %>% summarise(min_hours_visited = min(hours_sum_time , na.rm = TRUE), mean_hours_visited = mean(hours_sum_time , na.rm = TRUE),med_hours_visited = median(hours_sum_time , na.rm = TRUE), max_hours_visited = max(hours_sum_time , na.rm = TRUE))
 avgs_visitor_time_purchaseUs <-visitor_purchased_used %>% summarise(min_hours_visited = min(hours_sum_time , na.rm = TRUE), mean_hours_visited = mean(hours_sum_time , na.rm = TRUE),med_hours_visited = median(hours_sum_time , na.rm = TRUE), max_hours_visited = max(hours_sum_time , na.rm = TRUE))

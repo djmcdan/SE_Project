@@ -11,10 +11,14 @@ suppressPackageStartupMessages(library(zipcode))
 zipcode_tran <- transactions %>% mutate(zip = zip_bought) %>% select(zip) %>% distinct()
 data(zipcode)
 
+milage_bought_new <- milage_bought_new %>% mutate(zip = as.factor(zip_bought))
+milage_bought_used <- milage_bought_used %>% mutate(zip = as.factor(zip_bought))
+
+  
 new_bought_latlon = merge(milage_bought_new,zipcode, by.x='zip', by.y='zip') 
 use_bought_latlon = merge(milage_bought_used,zipcode, by.x='zip', by.y='zip') 
 
-names(new_bought_latlon)
+
 
 #Googlevis
 
@@ -71,6 +75,8 @@ statecount_ubll$region <- tolower(statecount_ubll$region_)
 
 #New car plot
 
+us <- map_data("state")
+
 gg_nw <- ggplot() + geom_map(data=us, map=us,
                     aes(x=long, y=lat, map_id=region),
                     fill="#ffffff", color="#ffffff", size=0.15)
@@ -98,7 +104,7 @@ gg_us <- gg_us + geom_map(data=statecount_ubll, map=us,
 #Want to see them the maps horizontally and in new color
 
 gg_us <- gg_us + scale_fill_continuous(low='thistle2', high='darkred', 
-                                       guide='colorbar')+ facet_wrap(~ year_purchased, ncol = 1) + labs(title = "Map of Use purchased cars in US")  
+                                       guide='colorbar')+ facet_wrap(~ year_purchased, ncol = 1) + labs(title = "Map of Used purchased cars in US")  
 
 gg_us
 
