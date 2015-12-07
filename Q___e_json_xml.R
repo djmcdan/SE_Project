@@ -1,6 +1,10 @@
 
 #JSON/XML
 
+setwd("C:/Users/Darius/Documents/DF2015_Data/DF2015_revised") 
+
+db <- dbConnect(SQLite(), dbname="Edmonds.sqlite")
+
 #e.   Create a data frame based on top models bought in each year and pull important consummer rating data?
 
 library(RJSONIO)
@@ -95,7 +99,7 @@ carsdf <- function(df) {
     
   #Main part of api
   api_first<- paste("https://api.edmunds.com/api/vehiclereviews/v2/",sep="")
-  
+  id<-df$id
   makeLow <-tolower(df$make)
   modelLow <-tolower(df$model)
   yearLow <-tolower(df$year)
@@ -126,7 +130,7 @@ carsdf <- function(df) {
 #   
 
   
-    masterlist[[jj]] <- list(makeLow=makeLow,modelLow=modelLow,yearLow=yearLow,Ratings=Ratings)
+    masterlist[[jj]] <- list(id = id,makeLow=makeLow,modelLow=modelLow,yearLow=yearLow,Ratings=Ratings)
   jj = jj + 1
   
   
@@ -135,8 +139,15 @@ car_rating <-  do.call(rbind,masterlist)
 return(car_rating)
 }
 
+#New cars top 25
+New_data<- dbGetQuery(db,"select make_bought as make, count(*) as freq,model_bought as model,model_year_bought as year 
+                      from Transactions WHERE new_or_used_bought = 'N' GROUP BY make_bought,model_bought HAVING count(*) > 1000  order by freq desc") %>% 
+  mutate(id = as.character(rownames(New_data),levels=rownames(New_data)))
 
-carsdf(New_data) ->c1
+
+carsdf(New_data) 
 
 
-New_data<- dbGetQuery(db,"select make_bought as make, count(*) as freq,model_bought as model,model_year_bought as year from Transactions WHERE new_or_used_bought = 'N'  GROUP BY make_bought,model_bought  order by freq desc LIMIT 5")
+
+
+dput(New_data[1:5,])
