@@ -1,14 +1,14 @@
 
 #JSON/XML
 
-setwd("C:/Users/Darius/Documents/DF2015_Data/DF2015_revised") 
-
-db <- dbConnect(SQLite(), dbname="Edmonds.sqlite")
-
 #e.   Create a data frame based on top models bought in each year and pull important consummer rating data?
 
+setwd("C:/Users/Darius/Documents/DF2015_Data/DF2015_revised") 
 library(RJSONIO)
 library(RCurl)
+library(dplyr)
+
+db <- dbConnect(SQLite(), dbname="Edmonds.sqlite")
 
 #First what are the top 5 makes bought
 
@@ -16,6 +16,11 @@ dbGetQuery(db,"select make_bought, count(*) as freq,model_bought,model_year_boug
 
 # Honda has the top four purchased. The new models are 2015 Accord, 2014 CR-V, 2015 Civic and 2015 Odyssey.
 # followed by Suburu Forester 2015.
+
+
+New_data<- dbGetQuery(db,"select make_bought as make, count(*) as freq,model_bought as model,model_year_bought as year 
+                      from Transactions WHERE new_or_used_bought = 'N'  GROUP BY make_bought,model_bought  order by freq desc LIMIT 10") %>% 
+  mutate(id = as.character(rownames(New_data),levels=rownames(New_data)))
 
 
 dbGetQuery(db,"select make_bought, count(*) as freq,model_bought,model_year_bought from Transactions WHERE new_or_used_bought = 'U'  GROUP BY make_bought,model_bought  order by freq desc LIMIT 5")
@@ -44,15 +49,15 @@ cars <- function(id,make,model,year) {
   modelLow <-tolower(model)
   yearLow <-tolower(year)
   make_mod_yr <- paste(makeLow,modelLow,yearLow,sep = "/")
-
-
+  
+  
   api_last <- paste("?fmt=json&api_key=akw86gbvscxm4szkb3t53rnw",sep="")
   url <- paste(api_first,make_mod_yr,api_last,sep = "")
   addr <- getURL(url)
   
-   
   
-   
+  
+  
   #JSON parsed
   url.json <- fromJSON(addr)
   
@@ -61,10 +66,10 @@ cars <- function(id,make,model,year) {
   
   Ratings <- unlist(url.json$averageRating[1])
   
-
+  
   #This gives us all personal weather stations data in area specified by lat and lon
   df_n_ = data.frame(id, makeLow, modelLow, yearLow, Ratings )
-    #This returns url, location and station data for lat lon
+  #This returns url, location and station data for lat lon
   return(df_n_)
   
   
@@ -86,66 +91,67 @@ cars(id=5,make="Subaru",model= "forester", year = 2015) ->t5
 
 
 
+
 #This is nice but I want to just add this rating to my data sent of all makes and models
 
 carsdf <- function(df) {
-
+  
+  df_ <- df
+  # df<-New_data
+  
+  #Main part of api
+  df$api_first<- paste("https://api.edmunds.com/api/vehiclereviews/v2/",sep="")
+  
+  df$makeLow <-tolower(df$make)
+  df$modelLow <-tolower(df$model)
+  df$yearLow <-tolower(df$year)
+  
+  df$make_mod_yr <- paste(df$makeLow,df$modelLow,df$yearLow,sep = "/") 
+  
+  df$api_last <- paste("?fmt=json&api_key=akw86gbvscxm4szkb3t53rnw",sep="")
+  df$url <- paste(df$api_first,df$make_mod_yr,df$api_last,sep = "")
+  #     df$urladd <- paste(url[ii],sep = "")
+  
+  url<-df$url
+  
+  
+  
+  
+  addr <- getURL(url) 
   
   masterlist <- list() # Blank master list
   jj = 1 # Counter for incrementing the masterlist
   
-  
-  for (ii in 1:length(df)) {
+  for (ii in 1:length(addr)) { 
+    #JSON parsed
+    url.json <- fromJSON(addr[ii])
     
-  #Main part of api
-  api_first<- paste("https://api.edmunds.com/api/vehiclereviews/v2/",sep="")
-  id<-df$id
-  makeLow <-tolower(df$make)
-  modelLow <-tolower(df$model)
-  yearLow <-tolower(df$year)
+    #Used to count for correct parsing
+    str(url.json,2)
+    
+    # df$Ratings <- unlist(url.json$averageRating[1])
+    
+    
+    Ratings <- unlist(url.json$averageRating[1])
+    # vehic <- unlist(url.json$links$rel)
+    
+    masterlist[[jj]] <- data.frame(Ratings)
+    jj = jj + 1
+  } 
   
-  make_mod_yr <- paste(makeLow,modelLow,yearLow,sep = "/") 
+  car_rating <-  do.call(rbind,masterlist) %>% mutate(id = as.character(rownames(New_data),levels=rownames(New_data)))
   
-  api_last <- paste("?fmt=json&api_key=akw86gbvscxm4szkb3t53rnw",sep="")
-  url <- paste(api_first,make_mod_yr,api_last,sep = "")
-  addr <- getURL(url)
-  
-  
-  
-  
-  #JSON parsed
-  url.json <- fromJSON(addr)
-  
-  #Used to count for correct parsing
-  #str(url.json,2)
-  
-  Ratings <- unlist(url.json$averageRating[1])
+  car_rating_ <-df_ %>% inner_join(car_rating)
   
   
-  #This gives us all personal weather stations data in area specified by lat and lon
-#   df <- rbind(id, makeLow, modelLow, yearLow, Ratings )
-#   df_ <- data.frame(df)
-#   df_n <- t(df_)
-#   df_n_ <- data.frame(df_n)
-#   
-
-  
-    masterlist[[jj]] <- list(id = id,makeLow=makeLow,modelLow=modelLow,yearLow=yearLow,Ratings=Ratings)
-  jj = jj + 1
-  
-  
-}
-car_rating <-  do.call(rbind,masterlist)
-return(car_rating)
+  return(car_rating_)
 }
 
-#New cars top 25
-New_data<- dbGetQuery(db,"select make_bought as make, count(*) as freq,model_bought as model,model_year_bought as year 
-                      from Transactions WHERE new_or_used_bought = 'N' GROUP BY make_bought,model_bought HAVING count(*) > 1000  order by freq desc") %>% 
-  mutate(id = as.character(rownames(New_data),levels=rownames(New_data)))
 
 
-carsdf(New_data) 
+carsdf(New_data) -> c1
+
+
 
 
 
