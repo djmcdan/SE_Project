@@ -3,7 +3,7 @@
 title: "SE project Edmonds Data exploration and question"
 author: "Darius McDaniel"
 date: "November 20, 2015"
-output: word_document
+output: html_document
 ---
 
 ----------
@@ -12,10 +12,8 @@ output: word_document
 
 All programs will be added and committed to github and found here : https://github.com/djmcdan/SE_Project.git
 
-Below are all the packages used in this project and also the data used.
 
-
-```{r, echo=FALSE, message=F, warning=F}
+```{r, include=FALSE}
 
 #SE_projectPackages
 
@@ -36,7 +34,7 @@ suppressPackageStartupMessages(library(zipcode))
 
 ```
 
-```{r, echo=FALSE, message=F, warning=F}
+```{r, include=FALSE}
 setwd("C:/Users/Darius/Documents/DF2015_Data/DF2015_revised") 
 
 #SE_projectData
@@ -61,7 +59,7 @@ Questions
 
 To first answer this question we must do some data cleaning. 
 
-```{r, echo=FALSE, message=F, warning=F}
+```{r, include=FALSE}
 
 
 
@@ -127,6 +125,7 @@ milage_bought_used <- used_bought_cat %>% mutate(mileage_cat100 <-ifelse(mileage
  milage_bought_used$year_purchased <- as.numeric( format( as.Date( milage_bought_used$date_sold, origin='1900-1-1'), '%Y'))
 
 ```
+
 Answers to posed questions
 
 ```{r}
@@ -166,12 +165,12 @@ histogram(used_bought_cat$time_hours_cat)
 ```       
         
 
-    2. Visualizations ( googlevis, ggplot2,  fusion tables)
+    2. Visualizations ( googlevis, ggplot2)
         
-       Using zip codes provided from transactions map the US top five models bought? Look at this per year bought?
-       Compare the graphs for the visits less than an hour that purchased cars to the 1-5hr visits?
-       Are there differences?
-```{r, echo=FALSE, message=F, warning=F}
+       a.Using zip codes provided from transactions data map the purchases using googlevis?
+       b.Than look the transactions separated by the year the car was purchased using ggplot2 . 
+
+```{r, include=FALSE}
  
 zipcode_tran <- transactions %>% mutate(zip = zip_bought) %>% select(zip) %>% distinct()
 data(zipcode)
@@ -213,20 +212,12 @@ plot(new_bought_latlon_.plot)
 plot(use_bought_latlon_.plot)
 
 
-#Now will use ggmap and ggplot  see if this is better
+#Now will use ggplot to look by year
 
 statecount_nbll <- new_bought_latlon_ %>% group_by(state,year_purchased) %>% summarise(n = n ()) %>% mutate(ct = n/100)
 statecount_ubll <- use_bought_latlon_ %>% group_by(state,year_purchased) %>% summarise(n = n ()) %>% mutate(ct = n/100)
 
 
-
-
-p_n = qmplot(longitude, latitude, data = new_bought_latlon_, colour = I("blue"),size = I(3), darken = .3) + facet_wrap(~ year_purchased) +  expand_limits() + theme_minimal() + labs(title = "Map of New purchased cars in US from 2013 - 2015")  
-p_u = qmplot(longitude, latitude, data = new_bought_latlon_, colour = I("blue"),size = I(3), darken = .3) + facet_wrap(~ year_purchased) +  expand_limits() + theme_minimal() + labs(title = "Map of Used purchased cars in US from 2013 - 2015")  
-
-
-plot(p_n)
-plot(p_u)
 
 statecount_nbll$region_ <- state.name[match(statecount_nbll$state,state.abb)]
 statecount_nbll$region <- tolower(statecount_nbll$region_)
@@ -276,8 +267,18 @@ gg_us
  
  
  
-```   
- 
+```
+
+
+```{r}
+#a.
+plot(new_bought_latlon_.plot)
+plot(use_bought_latlon_.plot)
+
+#b.
+gg_nw
+gg_us
+```
   c. SQL (sqldf / Rsqlite)
     
 
@@ -310,8 +311,8 @@ dbWriteTable(conn = db, name = "Shopping_", value = "shopping.csv",
 dbListTables(db)     
 
 # The columns in Visitor and Transactions
-dbListFields(db, "Visitor_")         
-dbListFields(db, "Transactions_")  
+#dbListFields(db, "Visitor_")         
+#dbListFields(db, "Transactions_")  
 ```
 
 Queries for Questions in the database
@@ -358,13 +359,104 @@ dbGetQuery(db,"select make_bought, count(*) as freq, min(price_bought), avg(pric
 
    d. Objects
     
+    Questions
+    
+    a.Create printout of the data created to look at purchases of new cars bought with over 100 miles and used cars with under 100 miles.
 
-    Create prints for the top vehicles purchased for the US with the average site visited time, create a print broken down by state.
+    b.Summarize the total purchase amounts .
+    
+    c.Plot using ggmap to see where purchases of new cars bought with over 100 miles and used cars with under 100 miles were.
+    
+```{r}    
 
-    Summarize the total purchase amounts for the top models in each state.
-    Plot the top makes purchased by zipcode. This will be plotted two ways using googlevis and  ggplot. 
+
+
+NewMilesOver100 <- transactions %>% filter(mileage_bought >100 & new_or_used_bought == "N")
+UsedMilesUnder100 <- transactions %>% filter(mileage_bought < 100 & new_or_used_bought == "U")
+
+#Create Object
+
+cardata <- function(m,x,y,z) {
+  Edcars <- list(title = m, id=x, source=y, data=z)
+  class(Edcars) <- "cars"
+  return(Edcars)
+}
+
+PurchasedNewOver100 <- cardata("New Cars Purchased with Miles Over 100 in","US","http://www.edmunds.com",NewMilesOver100)
+PurchasedUsedUnder100 <- cardata("Used Cars Purchased with Miles Under 100 in","US","http://www.edmunds.com",UsedMilesUnder100)
+
+#a.
+
+print.cars <- function(object) {
+  header <- paste("Data:",object$title,"Country:",object$id,"SOURCE:",object$source,sep=" ")
+  cat(header,"\n\n")
+  str(object$data,0)
+}
+
+
+
+#Want to see all all the people who bought cars over or under 100 miles new and used
+
+#b.
+
+plot.cars <- function(object,...) {
+   df <- object$data
+
+  
+  zipcode_tran <- df %>% mutate(zip = zip_bought) %>% select(zip) %>% distinct()
+  library(zipcode)
+  data(zipcode)
+  
+  dfout <- df %>% mutate(zip = as.factor(zip_bought),year_purchased = as.numeric( format( as.Date( date_sold, origin='1900-1-1'), '%Y')))
+  
+  dfout_latlon = merge(dfout,zipcode, by.x='zip', by.y='zip') 
+
+  
+  p <- qmplot(longitude, latitude, data = dfout_latlon, colour = I("red"),size = I(2), darken = .1) + facet_wrap(~ year_purchased, ncol = 1) +  expand_limits() + theme_minimal()
+
+  
+  plot(p)
+  }
+
+#c.
+summary.cars <- function(object) {
+ 
+  df <- object$data
+   sum <- df %>% summarise(mean_price_purchased = mean(price_bought , na.rm = TRUE),lowest_price_purchased = min(price_bought , na.rm = TRUE),highest_price_purchased = max(price_bought , na.rm = TRUE) )
+     
+  print(sum)
+}
+
+
+
+    
+```  
+
+Answers
+```{r}
+ #a.Create printout of the data created to look at purchases of new cars bought with over 100 miles and used cars with under 100 miles.
+
+    print(PurchasedNewOver100)
+    print(PurchasedUsedUnder100)
+
+
+ #b.Summarize the total purchase amounts .
+    
+    summary(PurchasedNewOver100)
+    summary(PurchasedUsedUnder100)
+    
+ #c.Plot using ggmap to see where purchases of new cars bought with over 100 miles and used cars with under 100 miles were.
+    
+    plot(PurchasedNewOver100)
+    plot(PurchasedUsedUnder100)
+
     
     
+    
+   
+```
+
+
     JSON/XML
     
      e.   Create a data frame based on top models bought in each year and pull important consummer rating data?
