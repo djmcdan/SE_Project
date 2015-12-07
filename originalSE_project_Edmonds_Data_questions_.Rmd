@@ -17,20 +17,20 @@ All programs will be added and committed to github and found here : https://gith
 
 #SE_projectPackages
 
-suppressPackageStartupMessages(library(data.table))
-suppressPackageStartupMessages(library(bit64))
-suppressPackageStartupMessages(library(plyr))
-suppressPackageStartupMessages(library(dplyr))
-suppressPackageStartupMessages(library(sqldf))
-suppressPackageStartupMessages(library(tcltk))
-suppressPackageStartupMessages(library(RSQLite))
-suppressPackageStartupMessages(library(DescTools))
-suppressPackageStartupMessages(library(lubridate))
-suppressPackageStartupMessages(library(ggplot2))
-suppressPackageStartupMessages(library(googleVis))
-suppressPackageStartupMessages(library(lattice))
-suppressPackageStartupMessages(library(ggmap))
-suppressPackageStartupMessages(library(zipcode))
+library(data.table)
+library(bit64)
+library(plyr)
+library(dplyr)
+library(sqldf)
+library(tcltk)
+library(RSQLite)
+library(DescTools)
+library(lubridate)
+library(ggplot2)
+library(googleVis)
+library(lattice)
+library(ggmap)
+library(zipcode)
 
 ```
 
