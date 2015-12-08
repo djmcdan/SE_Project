@@ -280,10 +280,12 @@ plot(use_bought_latlon_.plot)
 gg_nw
 gg_us
 ```
- # c. SQL (sqldf / Rsqlite)
+ 
+ 
+ c. SQL (sqldf / Rsqlite)
     
 
-  #      a. Create a SQLite database and figure out : How many new cars where bought by manufactuer year ?, How many different body types were purchased new and used displaying only the top 10 ?,  What are the top five makers that sold the most new and used cars?,
+      a. Create a SQLite database and figure out : How many new cars where bought by manufactuer year ?, How many different body types were purchased new and used displaying only the top 10 ?,  What are the top five makers that sold the most new and used cars?,
       b.  What are the average, min and max mileages bought along with the average, min and max price bought?
 
 
