@@ -18,16 +18,24 @@ dbGetQuery(db,"select make_bought, count(*) as freq,model_bought,model_year_boug
 # followed by Suburu Forester 2015.
 
 
-New_data<- dbGetQuery(db,"select make_bought as make, count(*) as freq,model_bought as model,model_year_bought as year 
-                      from Transactions WHERE new_or_used_bought = 'N'  GROUP BY make_bought,model_bought  order by freq desc LIMIT 10") %>% 
-  mutate(id = as.character(rownames(New_data),levels=rownames(New_data)))
-
-
 dbGetQuery(db,"select make_bought, count(*) as freq,model_bought,model_year_bought from Transactions WHERE new_or_used_bought = 'U'  GROUP BY make_bought,model_bought  order by freq desc LIMIT 5")
 
 # Honda has the top three used purchased. The use models are 2011 Accord, 2014 CR-V and 2011 Civic.
 # followed by 2014 BMW 3 Series and 2011 Toyota Camry.
 
+# Lets save this query plus add 5 more for below and add an id
+
+TopNew_data<- dbGetQuery(db,"select make_bought as make, count(*) as freq,model_bought as model,model_year_bought as year 
+                      from Transactions WHERE new_or_used_bought = 'N'  GROUP BY make_bought,model_bought  order by freq desc LIMIT 5") 
+TopNew_data<-  mutate(TopNew_data,id = as.character(rownames(TopNew_data),levels=rownames(TopNew_data)))
+
+
+
+
+TopUsed_data<- dbGetQuery(db,"select make_bought as make, count(*) as freq,model_bought as model,model_year_bought as year 
+                      from Transactions WHERE new_or_used_bought = 'U'  GROUP BY make_bought,model_bought  order by freq desc LIMIT 5") 
+TopUsed_data<- TopUsed_data %>%  mutate(id = as.character(rownames(TopUsed_data),levels=rownames(TopUsed_data)), model = gsub(" ", "-", model, fixed = TRUE)) 
+TopUsed_data$model <-gsub(" ", "-", TopUsed_data$model, fixed = TRUE)
 
 #So what are there ratings and reviews and price. 
 
@@ -62,7 +70,7 @@ cars <- function(id,make,model,year) {
   url.json <- fromJSON(addr)
   
   #Used to count for correct parsing
-  str(url.json,2)
+  # str(url.json,2)
   
   Ratings <- unlist(url.json$averageRating[1])
   
@@ -79,15 +87,25 @@ cars <- function(id,make,model,year) {
 #NEW top 5 purchased
 
 
-cars(id=1,make="HONDA",model= "acCord", year = 2015) ->t1
-cars(id=2,make="honDa",model= "Cr-v", year = 2014) ->t2
-cars(id=3,make="honda",model= "civic", year = 2015) ->t3
-cars(id=4,make="honda",model= "odyssey", year = 2015) ->t4
-cars(id=5,make="Subaru",model= "forester", year = 2015) ->t5
+cars(id=1,make="HONDA",model= "acCord", year = 2015) 
+cars(id=2,make="honDa",model= "Cr-v", year = 2014) 
+cars(id=3,make="honda",model= "civic", year = 2015) 
+cars(id=4,make="honda",model= "odyssey", year = 2015) 
+cars(id=5,make="Subaru",model= "forester", year = 2015) 
 
 
 #Used top 5 purchased
 
+
+
+cars(id=1,make="honda",model= "accord", year = 2015) 
+cars(id=2,make="honda",model= "Cr-v", year = 2014) 
+cars(id=3,make="honda",model= "civic", year = 2015) 
+cars(id=4,make="bmw",model= "3-series", year = 2015) 
+cars(id=5,make="toyota",model= "camry", year = 2015) 
+
+
+#This is nice but I want to just add this rating to my dataset with of all makes and models
 
 
 
@@ -117,17 +135,20 @@ carsdf <- function(df) {
   
   
   
-  addr <- getURL(url) 
+  
   
   masterlist <- list() # Blank master list
   jj = 1 # Counter for incrementing the masterlist
   
-  for (ii in 1:length(addr)) { 
+  for (ii in 1:length(url)) { 
     #JSON parsed
-    url.json <- fromJSON(addr[ii])
+    
+    addr <- getURL(url[ii])    
+    
+    url.json <- fromJSON(addr)
     
     #Used to count for correct parsing
-    str(url.json,2)
+    #str(url.json,2)
     
     # df$Ratings <- unlist(url.json$averageRating[1])
     
@@ -139,7 +160,7 @@ carsdf <- function(df) {
     jj = jj + 1
   } 
   
-  car_rating <-  do.call(rbind,masterlist) %>% mutate(id = as.character(rownames(New_data),levels=rownames(New_data)))
+  car_rating <-  do.call(rbind,masterlist) %>% mutate(id = as.character(rownames(df_),levels=rownames(df_)))
   
   car_rating_ <-df_ %>% inner_join(car_rating)
   
@@ -148,12 +169,11 @@ carsdf <- function(df) {
 }
 
 
+carsdf(TopNew_data) -> c1
 
-carsdf(New_data) -> c1
-
-
-
+carsdf(TopUsed_data) -> c2
 
 
+#This puts the data in a list form to send to people using R for testing
 
 dput(New_data[1:5,])
